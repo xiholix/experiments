@@ -261,6 +261,30 @@ def discard_mostclass_data():
         pickle.dump((labels, datas), open(outputPath, 'w'))
 
 
+def get_data_by_emotion(_emotion, _train=False):
+    '''
+    通过情感标签来获得结构化数据用来训练和测试
+    :param _emotion:
+    :param _train:
+    :return:
+    '''
+    path = ''
+    if _train:
+        path = 'data/discardMostClassData/Ren_CECpsTrain'+_emotion+'.txt'
+    else:
+        path = 'binaryVecData/Ren_CECpsTest'+_emotion+'.txt'
+
+    labels, datas = pickle.load(open(path))
+    labels = np.array(labels)   #因为test文件中labels为list类型
+    print(datas.shape)
+    print(labels.shape)
+    return labels, datas
+
+
+def combineResults():
+    baseDir = 'data/result'
+    fpaths = os.listdir(baseDir)
+
 if __name__ == "__main__":
     # get_binary_algorithm_data()
     # get_emotion_set()
@@ -268,5 +292,6 @@ if __name__ == "__main__":
     # get_vocabulary()
     # get_vocabulary_vec()
     # test_binary_vec_data()
-    # overlook_the_dataset()
-    discard_mostclass_data()
+    overlook_the_dataset()
+    # discard_mostclass_data()
+    # get_data_by_emotion(cecEmotionList[0], True)
