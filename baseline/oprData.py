@@ -203,12 +203,70 @@ def test_binary_vec_data():
     print(type(datas))
     # datas = np.stack(datas)
     print(datas.shape)
+    print('the ratio between label 1 and 0 {0}'.format(np.sum(labels)/len(labels)))
+    print('the num of label 1 is: %d'%(np.sum(labels)))
+
+
+def overlook_one_dataset(_path):
+    labels, datas = pickle.load(open(_path))
+    print('the ratio between label 1 and 0 {0}'.format(np.sum(labels) / len(labels)))
+    print('the num of label 1 is: %d' % (np.sum(labels)))
+
+
+def overlook_the_dataset():
+    '''
+    use to view the imbalance of these emotion labels
+    :return:
+    '''
+    trainOrTest = 'Train'   #element of ('Train', 'Test'), be careful the case
+    dir = 'binaryVecData'
+    filePaths = os.listdir(dir)
+
+    for f in filePaths:
+        filePath = dir + os.sep + f
+        # print(filePath)
+        if trainOrTest in f:
+            print('the result of %s'%filePath)
+            overlook_one_dataset(filePath)
+
+
+def discard_mostclass_data():
+    '''
+    将binaryVecData文件夹下的训练数据的多数类的数据丢弃一些,形成与少数类一样多的平衡的训练数据用于训练
+    :return:
+    '''
+    baseDir = 'binaryVecData'
+    outputDir = 'data/discardMostClassData'
+    filePaths = os.listdir(baseDir)
+
+    for f in filePaths:
+        if 'Train' not in f:
+            continue
+        filePath = baseDir + os.sep + f
+        outputPath = outputDir + os.sep + f
+        labels, datas = pickle.load(open(filePath))
+        numTheLeastLabels = np.sum(labels)
+        indiceSort = np.argsort(labels)
+        indices = indiceSort[:numTheLeastLabels]
+        mostLabelsIndices = indiceSort[numTheLeastLabels:]
+        np.random.shuffle(mostLabelsIndices)   #np.random.shuffle直接对参数操作,没有返回值
+        indices = np.concatenate((indices, mostLabelsIndices[:numTheLeastLabels]))
+        np.random.shuffle(indices)
+        # print(type(labels))  #labels的类型是list,在本函数处理后将会转换为array
+        # print(type(datas))
+        labels = np.array(labels)
+        labels = labels[indices]
+        datas = datas[indices]
+        print(datas.shape)
+        pickle.dump((labels, datas), open(outputPath, 'w'))
 
 
 if __name__ == "__main__":
     # get_binary_algorithm_data()
     # get_emotion_set()
-    get_binary_vec_data()
+    # get_binary_vec_data()
     # get_vocabulary()
     # get_vocabulary_vec()
-    test_binary_vec_data()
+    # test_binary_vec_data()
+    # overlook_the_dataset()
+    discard_mostclass_data()
