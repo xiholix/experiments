@@ -1,0 +1,5 @@
+operatedVec/tfrecord保存一些tf格式的输入输出文件,每个example含有一个x和一个标签y
+operatedVec/vocab/.*_voc保存了对应的情感词汇表
+operatedVec/wordToIndex/indexVecMatrix行号代表对应的词汇索引,每行是该索引对应的词向量
+operatedVec/wordToIndex/word2Index由词作为key,对应的词汇索引为value的map
+
