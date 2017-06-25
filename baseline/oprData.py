@@ -53,6 +53,7 @@ def get_binary_algorithm_data():
     outPath = 'binaryData'
     # filePaths = os.listdir(path)
     filePaths = ['Ren_CECpsTest.txt', 'Ren_CECpsTrain.txt']
+    print('begin get binary algorithm data')
     for f in filePaths:
         fPath = path + os.sep + f
         outFile = []
@@ -292,6 +293,6 @@ if __name__ == "__main__":
     # get_vocabulary()
     # get_vocabulary_vec()
     # test_binary_vec_data()
-    overlook_the_dataset()
+    # overlook_the_dataset()
     # discard_mostclass_data()
     # get_data_by_emotion(cecEmotionList[0], True)

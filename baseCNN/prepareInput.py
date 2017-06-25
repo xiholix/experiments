@@ -163,59 +163,126 @@ def opr_one_line(line, wordToIndex, length):
     return label, oneLine
 
 
-def generate_tfrecord():
-    trainPath = "data/rawData/binaryData/Ren_CECpsTrainAnger.txt"
-    testPath = "data/rawData/binaryData/Ren_CECpsTestAnger.txt"
+def generate_tfrecord(emotion):
+    index = get_balance_data_index(emotion)
+    trainPath = "data/rawData/binaryData/Ren_CECpsTrain"+emotion+".txt"
+    testPath = "data/rawData/binaryData/Ren_CECpsTest"+emotion+".txt"
     path = "data/operatedVec/wordToIndex/word2Index"
-    resultPath = "data/operatedVec/tfrecord/TrainAnger.tf"
-    testResultPath = "data/operatedVec/tfrecord/TestAnger.tf"
+    resultPath = "data/operatedVec/tfrecord/Train"+emotion+".tf"
+    testResultPath = "data/operatedVec/tfrecord/Test"+emotion+".tf"
+    writer = tf.python_io.TFRecordWriter(resultPath)
+
+    wordToIndex = pickle.load(open(path))
+    with open(trainPath) as f:
+        line = f.readline()
+        i = 0
+        while line:
+            if i in index:
+               label, data = opr_one_line(line, wordToIndex, FLAGS.sentenceLength)
+               xFeature = tf.train.Feature(int64_list=tf.train.Int64List(value=data))
+               yFeature = tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
+               features = tf.train.Features(feature={
+                   'x':xFeature,
+                   'y':yFeature
+               })
+               example = tf.train.Example(features=features)
+               writer.write(example.SerializeToString())
+            # print(data)
+            i += 1
+            line = f.readline()
+
     writer = tf.python_io.TFRecordWriter(testResultPath)
 
     wordToIndex = pickle.load(open(path))
     with open(testPath) as f:
         line = f.readline()
+        i = 0
         while line:
-            label, data = opr_one_line(line, wordToIndex, FLAGS.sentenceLength)
-            xFeature = tf.train.Feature(int64_list=tf.train.Int64List(value=data))
-            yFeature = tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
-            features = tf.train.Features(feature={
-                'x':xFeature,
-                'y':yFeature
-            })
-            example = tf.train.Example(features=features)
-            writer.write(example.SerializeToString())
+               label, data = opr_one_line(line, wordToIndex, FLAGS.sentenceLength)
+               xFeature = tf.train.Feature(int64_list=tf.train.Int64List(value=data))
+               yFeature = tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
+               features = tf.train.Features(feature={
+                   'x':xFeature,
+                   'y':yFeature
+               })
+               example = tf.train.Example(features=features)
+               writer.write(example.SerializeToString())
             # print(data)
+               i += 1
+               line = f.readline()
 
-            line = f.readline()
 
-
-def reader_tfrecoder(path):
+def reader_tfrecoder(path, isTrain=False):
     pathList = [path]
-    queue = tf.train.string_input_producer(pathList)
+    if isTrain:
+        queue = tf.train.string_input_producer(pathList)
+    else:
+        queue = tf.train.string_input_producer(pathList, 2)
     reader = tf.TFRecordReader()
+    reader.reset()
     _, example = reader.read(queue)
     example = tf.parse_single_example(example, features={
         'x':tf.FixedLenFeature([FLAGS.sentenceLength], tf.int64),
         'y':tf.FixedLenFeature([1], tf.int64)
     })
-
-    batchData = tf.train.shuffle_batch([example['x'], example['y']],
-                                       FLAGS.batchSize,
-                                       FLAGS.batchSize*5,
-                                       FLAGS.batchSize)
+    if isTrain:
+        batchData = tf.train.shuffle_batch([example['x'], example['y']],
+                                           FLAGS.batchSize,
+                                           FLAGS.batchSize*5,
+                                           FLAGS.batchSize)
+    else:
+         batchData = tf.train.batch([example['x'], example['y']],
+                                           FLAGS.batchSize,
+                                           1,
+                                           FLAGS.batchSize*5,
+                                           )
     return batchData
+
+
+def get_balance_data_index(emotion):
+    path = "data/rawData/binaryData/Ren_CECpsTrain"+emotion+".txt"
+    truely_index = []
+    false_index = []
+    i = 0
+    with open(path) as f:
+        line = f.readline()
+        while line:
+            words = line.split()
+            if words[0]=="1":
+                truely_index.append(i)
+            else:
+                false_index.append(i)
+            i += 1
+            line = f.readline()
+    print (len(truely_index))
+    print (len(false_index))
+    lengths = len(truely_index)
+    false_index = np.array(false_index)
+    np.random.shuffle(false_index)
+    false_index = false_index[:lengths]
+    truely_index = np.array(truely_index)
+    index = np.concatenate((truely_index, false_index))
+    np.random.shuffle(index)
+    return index
 
 
 if __name__ == "__main__":
     # get_vocabulary_vec()
     # build_word_index_map()
     # generate_tfrecord()
-    path = "data/operatedVec/tfrecord/TrainAnger.tf"
-    batchData = reader_tfrecoder(path)
-    sess = tf.Session()
-    init = tf.global_variables_initializer()
-    sess.run(init)
-    tf.train.start_queue_runners(sess)
-    b = sess.run(batchData)
-    print(len(b[0]))
-    print(b[0][3])
+    # path = "data/operatedVec/tfrecord/TrainAnger.tf"
+    # batchData = reader_tfrecoder(path)
+    # sess = tf.Session()
+    # init = tf.global_variables_initializer()
+    # sess.run(init)
+    # tf.train.start_queue_runners(sess)
+    # print("start")
+    # b = sess.run(batchData)
+    # print(len(b[0]))
+    # print(b[0][3])
+    # get_vocabulary()
+    for emotion in cecEmotionList:
+        print(emotion)
+        generate_tfrecord(emotion)
+    
+  

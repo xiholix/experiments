@@ -71,3 +71,6 @@ rexx/spider.py
 *.dic
 */binaryData/
 */binaryVecData/
+*/.vscode/*
+*/result/*
+
